@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find zed_interfaces)/urdf/zed_descr.urdf.xacro"/>
+
+  <joint name="zed_bracket_joint" type="fixed">
+    <origin xyz="0.089 0.089 0" rpy="0 0 0" />
+    <parent link="world"/>
+    <child link="zed_bracket_link" />
+  </joint>
+
+  <link name="zed_bracket_link" />
+
+  <joint name="zed_mount_joint" type="fixed">
+    <origin xyz="0.0413765 0 -0.0128477" rpy="0 0.698132 0" />
+    <parent link="zed_bracket_link"/>
+    <child link="zed_mount_link" />
+  </joint>
+
+  <link name="zed_mount_link" />
+
+  <joint name="zed_joint" type="fixed">
+    <origin xyz="0 0 0.016" rpy="0 0 0" />
+    <parent link="zed_mount_link"/>
+    <child link="zed_link" />
+  </joint>
+
+</robot>

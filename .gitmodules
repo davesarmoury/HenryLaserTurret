@@ -1,3 +1,9 @@
 [submodule "yolov5"]
 	path = ai_training/yolov5
 	url = https://github.com/ultralytics/yolov5
+[submodule "zed-ros-interfaces"]
+	path = zed-ros-interfaces
+	url = https://github.com/davesarmoury/zed-ros-interfaces.git
+[submodule "ned_ros"]
+	path = ned_ros
+	url = https://github.com/davesarmoury/ned_ros.git
