@@ -7,3 +7,6 @@
 [submodule "ned_ros"]
 	path = ned_ros
 	url = https://github.com/davesarmoury/ned_ros.git
+[submodule "henry_turret_detection/yolov5"]
+	path = henry_turret_detection/yolov5
+	url = https://github.com/ultralytics/yolov5
