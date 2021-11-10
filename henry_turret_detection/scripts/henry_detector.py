@@ -28,7 +28,7 @@ exit_signal = False
 
 def zed_thread(svo_filepath=None):
 
-    global image_left, image_depth, exit_signal, new_data, camera_info
+    global image_left, image_depth, point_cloud, exit_signal, new_data, camera_info
 
     print("Initializing Camera...")
 
@@ -42,9 +42,9 @@ def zed_thread(svo_filepath=None):
     init_params = sl.InitParameters(input_t=input_type, svo_real_time_mode=True)
     init_params.camera_resolution = sl.RESOLUTION.HD720
     init_params.coordinate_units = sl.UNIT.METER
-    init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Z_UP
-    init_params.depth_mode = sl.DEPTH_MODE.QUALITY
-    init_params.depth_maximum_distance = 20
+    init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Z_UP_X_FWD
+    init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE # QUALITY
+    init_params.depth_maximum_distance = 10
 
     runtime_params = sl.RuntimeParameters(sensing_mode=sl.SENSING_MODE.FILL, enable_depth=True)
 
@@ -58,6 +58,7 @@ def zed_thread(svo_filepath=None):
 
     image_left_tmp = sl.Mat()
     image_depth_tmp = sl.Mat()
+    point_cloud = sl.Mat()
 
     print("Initialized Camera")
 
@@ -68,6 +69,8 @@ def zed_thread(svo_filepath=None):
 
             zed.retrieve_image(image_left_tmp, sl.VIEW.LEFT)
             zed.retrieve_image(image_depth_tmp, sl.VIEW.DEPTH)
+            #zed.retrieve_measure(measure_depth_tmp)
+            zed.retrieve_measure(point_cloud, sl.MEASURE.XYZRGBA, sl.MEM.CPU)
 
             image_left = image_left_tmp.get_data()
             image_depth = image_depth_tmp.get_data()
@@ -86,7 +89,7 @@ def zed_thread(svo_filepath=None):
     print("ZED Thread Dead...")
 
 def main():
-    global image_left, image_depth, exit_signal, new_data, camera_info
+    global image_left, image_depth, point_cloud, exit_signal, new_data, camera_info
 
     capture_thread = Thread(target=zed_thread, kwargs={'svo_filepath': opt.svo})
     capture_thread.start()
@@ -116,6 +119,7 @@ def main():
             lock.acquire()
             visual_frame = image_left.copy()
             depth_frame = image_depth.copy()
+            depth_measure_frame = image_depth.copy()
             lock.release()
             new_data = False
 
@@ -147,20 +151,19 @@ def main():
                         if conf > 0.85:
                             p_scaled = [xyxy[0] * 720.0/416.0 + 280, xyxy[1] * 720.0/416.0, xyxy[2] * 720.0/416.0 + 280, xyxy[3] * 720.0/416.0]
                             h_origin = [(p_scaled[0] + p_scaled[2]) / 2.0, (p_scaled[1] + p_scaled[3]) / 2.0]
-                            Z = depth_frame[int(h_origin[0]), int(h_origin[1])]
+                            #Z = depth_measure_frame[int(h_origin[0]), int(h_origin[1])]
 
-                            world_pose = []
-
-                            world_pose.append((float(h_origin[0])-camera_info.cx)*Z/camera_info.fx)
-                            world_pose.append((float(h_origin[1])-camera_info.cy)*Z/camera_info.fy)
-                            world_pose.append(Z)
+                            err, world_pose = point_cloud.get_value(int(h_origin[0]), int(h_origin[1]))
+                            #world_pose.append( ( float( h_origin[0] ) - camera_info.cx ) * Z / camera_info.fx )
+                            #world_pose.append( ( float( h_origin[1] ) - camera_info.cy ) * Z / camera_info.fy )
+                            #world_pose.append( Z )
                             print(world_pose)
 
-                            cv2.rectangle(depth_frame, (int(p_scaled[0]),  int(p_scaled[1])), (int(p_scaled[2]), int(p_scaled[3])), (0,0,255), 3)
+                            cv2.rectangle(visual_frame, (int(p_scaled[0]),  int(p_scaled[1])), (int(p_scaled[2]), int(p_scaled[3])), (0,0,255), 3)
 
                 s += '%gx%g ' % img.shape[2:]  # print string
 
-            cv2.imshow("ZED", depth_frame)
+            cv2.imshow("ZED", visual_frame)
 
             key = cv2.waitKey(5)
             if key == 27:    # Esc key to stop
