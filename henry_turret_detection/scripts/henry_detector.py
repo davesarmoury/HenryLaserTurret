@@ -26,15 +26,20 @@ lock = Lock()
 new_data = False
 exit_signal = False
 
-def zed_thread():
+def zed_thread(svo_filepath=None):
+
     global image_left, image_depth, exit_signal, new_data, camera_info
 
     print("Initializing Camera...")
 
     zed = sl.Camera()
 
+    input_type = sl.InputType()
+    if svo_filepath is not None:
+        input_type.set_from_svo_file(svo_filepath)
+
     # Create a InitParameters object and set configuration parameters
-    init_params = sl.InitParameters()
+    init_params = sl.InitParameters(input_t=input_type)
     init_params.camera_resolution = sl.RESOLUTION.HD720
     init_params.coordinate_units = sl.UNIT.METER
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Z_UP
@@ -71,8 +76,8 @@ def zed_thread():
 
 
     print("Cleaning Up Camera")
-    image_depth.free(sl.MEM.CPU)
-    image_left.free(sl.MEM.CPU)
+    image_depth_tmp.free(sl.MEM.CPU)
+    image_left_tmp.free(sl.MEM.CPU)
     zed.close()
 
     print("ZED Thread Dead...")
@@ -80,7 +85,7 @@ def zed_thread():
 def main():
     global image_left, image_depth, exit_signal, new_data
 
-    capture_thread = Thread(target=zed_thread)
+    capture_thread = Thread(target=zed_thread, kwargs={'svo_filepath': opt.svo})
     capture_thread.start()
 
     print("intializing Network...")
@@ -138,11 +143,14 @@ def main():
 #                rospy.loginfo(str(s) + " Done. " + str(t2 - t1) + "s")
 
                 # Process detections
-            print("$$$$$$$$$$$$$$$$$$$")
+      #      print ("Found " + str(len(pred)) + " Henries", end='\r')
             for i, det in enumerate(pred):
-                for *xyxy, conf, cls in reversed(det):
-                    if conf > 0.8:
-                        cv2.rectangle(frame, (xyxy[0], xyxy[1]) (xyxy[3], xyxy[3]), (0,255,0), 2)
+                if len(det):
+                    for *xyxy, conf, cls in reversed(det):
+                        if conf > 0.85:
+                            p_scaled = [xyxy[0] * 720.0/416.0 + 280, xyxy[1] * 720.0/416.0, xyxy[2] * 720.0/416.0 + 280, xyxy[3] * 720.0/416.0]
+                            cv2.rectangle(frame, (int(p_scaled[0]),  int(p_scaled[1])), (int(p_scaled[2]), int(p_scaled[3])), (0,0,255), 3)
+
 #cv2.rectangle(frame, start_point, end_point, color, thickness)
                 s += '%gx%g ' % img.shape[2:]  # print string
 
@@ -158,12 +166,14 @@ def main():
 
             sleep(0.01)
 
+    sleep(5)
     cv2.destroyAllWindows()
     sleep(1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--weights', nargs='+', type=str, default='../weights/best.pt', help='model.pt path(s)')
+    parser.add_argument('--svo', type=str, default=None, help='optional svo file')
     parser.add_argument('--img-size', type=int, default=416, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.4, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
