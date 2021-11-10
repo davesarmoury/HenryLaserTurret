@@ -39,7 +39,7 @@ def zed_thread(svo_filepath=None):
         input_type.set_from_svo_file(svo_filepath)
 
     # Create a InitParameters object and set configuration parameters
-    init_params = sl.InitParameters(input_t=input_type)
+    init_params = sl.InitParameters(input_t=input_type, svo_real_time_mode=True)
     init_params.camera_resolution = sl.RESOLUTION.HD720
     init_params.coordinate_units = sl.UNIT.METER
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Z_UP
@@ -54,7 +54,7 @@ def zed_thread(svo_filepath=None):
         print(repr(status))
         exit()
 
-    camera_info = zed.get_camera_information()
+    camera_info = zed.get_camera_information().calibration_parameters.left_cam
 
     image_left_tmp = sl.Mat()
     image_depth_tmp = sl.Mat()
@@ -65,10 +65,13 @@ def zed_thread(svo_filepath=None):
         if zed.grab(runtime_params) == sl.ERROR_CODE.SUCCESS:
             # Retrieve image
             lock.acquire()
+
             zed.retrieve_image(image_left_tmp, sl.VIEW.LEFT)
             zed.retrieve_image(image_depth_tmp, sl.VIEW.DEPTH)
+
             image_left = image_left_tmp.get_data()
             image_depth = image_depth_tmp.get_data()
+
             lock.release()
             new_data = True
 
@@ -83,7 +86,7 @@ def zed_thread(svo_filepath=None):
     print("ZED Thread Dead...")
 
 def main():
-    global image_left, image_depth, exit_signal, new_data
+    global image_left, image_depth, exit_signal, new_data, camera_info
 
     capture_thread = Thread(target=zed_thread, kwargs={'svo_filepath': opt.svo})
     capture_thread.start()
@@ -111,13 +114,13 @@ def main():
     while True:
         if new_data:
             lock.acquire()
-            frame = image_left.copy()
+            visual_frame = image_left.copy()
+            depth_frame = image_depth.copy()
             lock.release()
             new_data = False
 
-            net_image = frame.copy()
+            net_image = visual_frame.copy()
 
-            #net_image = net_image[:, :, :-1]
             net_image = net_image[:,:,:3]
             net_image = net_image[0:720, 280:280+720]
             net_image = cv2.resize(net_image, (416, 416))
@@ -132,32 +135,32 @@ def main():
             if img.ndimension() == 3:
                 img = img.unsqueeze(0)
 
-            # Inference
             pred = model(img, augment=opt.augment)[0]
 
-            # Apply NMS
             pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
             t2 = time_synchronized()
             s = ""
 
-#                rospy.loginfo(str(s) + " Done. " + str(t2 - t1) + "s")
-
-                # Process detections
-      #      print ("Found " + str(len(pred)) + " Henries", end='\r')
             for i, det in enumerate(pred):
                 if len(det):
                     for *xyxy, conf, cls in reversed(det):
                         if conf > 0.85:
                             p_scaled = [xyxy[0] * 720.0/416.0 + 280, xyxy[1] * 720.0/416.0, xyxy[2] * 720.0/416.0 + 280, xyxy[3] * 720.0/416.0]
-                            cv2.rectangle(frame, (int(p_scaled[0]),  int(p_scaled[1])), (int(p_scaled[2]), int(p_scaled[3])), (0,0,255), 3)
+                            h_origin = [(p_scaled[0] + p_scaled[2]) / 2.0, (p_scaled[1] + p_scaled[3]) / 2.0]
+                            Z = depth_frame[int(h_origin[0]), int(h_origin[1])]
 
-#cv2.rectangle(frame, start_point, end_point, color, thickness)
+                            world_pose = []
+
+                            world_pose.append((float(h_origin[0])-camera_info.cx)*Z/camera_info.fx)
+                            world_pose.append((float(h_origin[1])-camera_info.cy)*Z/camera_info.fy)
+                            world_pose.append(Z)
+                            print(world_pose)
+
+                            cv2.rectangle(depth_frame, (int(p_scaled[0]),  int(p_scaled[1])), (int(p_scaled[2]), int(p_scaled[3])), (0,0,255), 3)
+
                 s += '%gx%g ' % img.shape[2:]  # print string
 
-        #        Z = depth(v,u)
-        #        X = (u-cx)*depth/fx
-        #        Y = (v-cy)*depth/fy
-            cv2.imshow("ZED", frame)
+            cv2.imshow("ZED", depth_frame)
 
             key = cv2.waitKey(5)
             if key == 27:    # Esc key to stop
