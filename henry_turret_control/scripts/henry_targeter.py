@@ -10,8 +10,8 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 from control_msgs.msg import FollowJointTrajectoryActionGoal
 from trac_ik_python.trac_ik import IK
 
-laser_height_shift = 0.25
-reach_dist = 0.35
+laser_height_shift = 0.2
+reach_dist = 0.4
 ik_solver = None
 pub = None
 seed_state = [0.0, 0.0, 0.0, 0.0, -1.5707, 0.0]
@@ -52,7 +52,7 @@ def pos_callback(msg):
 #                              "laser",
 #                              "world")
 
-    ik = ik_solver.get_ik(seed_state, pos.x, pos.y, pos.z, ori.x, ori.y, ori.z, ori.w)
+    ik = ik_solver.get_ik(seed_state, pos[0], pos[1], pos[2], ori[0], ori[1], ori[2], ori[3])
 
     if ik:
         msg = FollowJointTrajectoryActionGoal()
@@ -69,14 +69,13 @@ def pos_callback(msg):
 
         msg.goal.trajectory.points.append(point_msg)
 
-        rospy.loginfo(str(point_msg.positions))
         pub.publish(msg)
 
     else:
         rospy.logwarn("IK_ERROR")
 
 def mover():
-    global broadcaster, laser_o_to_cam_mtx, world_to_laser_o, ik_solver
+    global broadcaster, laser_o_to_cam_mtx, world_to_laser_o, ik_solver, pub
     rospy.init_node('mover', anonymous=True)
 
     rospy.loginfo("Getting IK")
