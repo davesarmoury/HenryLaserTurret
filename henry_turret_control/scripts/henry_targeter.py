@@ -1,8 +1,9 @@
-from niryo_robot_arm_commander.msg import RobotMoveActionGoal
-from geometry_msgs.msg import PoseStamped
+#!/usr/bin/env python
+
 import rospy
 import math
-
+from geometry_msgs.msg import PoseStamped
+from trajectory_msgs.msg import JointTrajectoryPoint
 from control_msgs.msg import FollowJointTrajectoryActionGoal
 
 def mover():
@@ -10,13 +11,24 @@ def mover():
     rospy.init_node('mover', anonymous=True)
     rate = rospy.Rate(2)
 
-    for i in range(50):
+    for i in range(100):
         msg = FollowJointTrajectoryActionGoal()
-        msg.goal.cmd.joints = [math.sin(rospy.get_time() / 10.0),0,0,0,0,0]
+        msg.header.stamp = rospy.Time.now()
+        msg.goal_id.stamp = rospy.Time.now()
+        msg.goal_id.id = "henry_" + str(rospy.get_time())
+
+        msg.goal.trajectory.header.frame_id = "world"
+        msg.goal.trajectory.joint_names = ["joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"]
+
+        point_msg = JointTrajectoryPoint()
+        point_msg.positions = [math.sin(rospy.get_time() /6.0),0,0,0,0,0]
+        point_msg.time_from_start = rospy.Duration.from_sec(1.0)
+
+        msg.goal.trajectory.points.append(point_msg)
 
         if rospy.is_shutdown():
             break
-        rospy.loginfo(str(msg.goal.cmd.joints))
+        rospy.loginfo(str(point_msg.positions))
         pub.publish(msg)
         rate.sleep()
 
@@ -25,46 +37,3 @@ if __name__ == '__main__':
         mover()
     except rospy.ROSInterruptException:
         pass
-
-#################################################################
-#niryo@niryo_pi4:~$ rostopic pub /niryo_robot_arm_commander/robot_action/goal niryo_robot_arm_commander/RobotMoveActionGoal "header:
-#  seq: 0
-#  stamp:
-#    secs: 0
-#    nsecs: 0
-#  frame_id: ''
-#goal_id:
-#  stamp:
-#    secs: 0
-#    nsecs: 0
-#  id: ''
-#goal:
-#  cmd:
-#    cmd_type: 0
-#    joints: [0,0,0.2,0,0,0]
-#    position: {x: 0.0, y: 0.0, z: 0.0}
-#    rpy: {roll: 0.0, pitch: 0.0, yaw: 0.0}
-#    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 0.0}
-#    shift: {axis_number: 0, value: 0.0}
-#    list_poses:
-#    - position: {x: 0.0, y: 0.0, z: 0.0}
-#      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 0.0}
-#    dist_smoothing: 0.0" 
-##################################################################
-#/where_in_the_world_is_henry_san_diego
-#davesarmoury@armoury-agx:~/ws/henry_ws/src/HenryLaserTurret/henry_turret_control/scripts$ rosmsg show geometry_msgs/PoseStamped 
-#std_msgs/Header header
-#  uint32 seq
-#  time stamp
-#  string frame_id
-#geometry_msgs/Pose pose
-#  geometry_msgs/Point position
-#    float64 x
-#    float64 y
-#    float64 z
-#  geometry_msgs/Quaternion orientation
-#    float64 x
-#    float64 y
-#    float64 z
-#    float64 w
-#################################################################
