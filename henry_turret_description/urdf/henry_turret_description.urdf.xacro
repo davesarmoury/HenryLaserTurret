@@ -25,4 +25,12 @@
     <child link="zed_link" />
   </joint>
 
+  <link name="laser_link" />
+
+  <joint name="laser_joint" type="fixed">
+    <origin xyz="0 0 0.025" rpy="-1.57070 -1.5707 0" />
+    <parent link="hand_link"/>
+    <child link="laser_link" />
+  </joint>
+
 </robot>

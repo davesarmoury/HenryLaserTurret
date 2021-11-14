@@ -13,7 +13,7 @@ Make a workspace
         rosdep install --from-paths src --ignore-src -yr
         catkin_make
 
-*Make sure your hosts are setup properly in `/etc/hosts`*
+**Make sure your hosts are setup properly in `/etc/hosts`**
 
 Add these lines to your `.bashrc`
 
@@ -45,7 +45,7 @@ SSH into ned
 
         catkin_make
 
-*Make sure your hosts are setup properly in `/etc/hosts`*
+**Make sure your hosts are setup properly in `/etc/hosts`**
 
 Disable the firewall
 
@@ -73,7 +73,4 @@ Add this line to the top of cat /etc/chrony/chrony.conf
         server <Jetson Hostname> iburst prefer
 
 Restart chrony (or the whole machine)
-
-
-
 
