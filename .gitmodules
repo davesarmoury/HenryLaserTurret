@@ -6,7 +6,7 @@
 	url = https://github.com/davesarmoury/zed-ros-interfaces.git
 [submodule "ned_ros"]
 	path = ned_ros
-	url = git@github.com:davesarmoury/ned_ros.git
+	url = https://github.com/davesarmoury/ned_ros.git
 [submodule "henry_turret_detection/yolov5"]
 	path = henry_turret_detection/yolov5
 	url = https://github.com/ultralytics/yolov5
