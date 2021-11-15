@@ -12,6 +12,9 @@ from trac_ik_python.trac_ik import IK
 
 laser_height_shift = 0.2
 reach_dist = 0.4
+horizontal_offset = 0.3
+horizontal_period = 4.0
+
 ik_solver = None
 pub = None
 seed_state = [0.0, 0.0, 0.0, 0.0, -1.5707, 0.0]
@@ -30,6 +33,11 @@ def pos_callback(msg):
 
     h_mtx = compose_matrix(translate=(msg.pose.position.x, msg.pose.position.y, msg.pose.position.z))
     o_to_h_mtx = numpy.matmul(laser_o_to_cam_mtx, h_mtx)
+
+    t = rospy.get_time()
+    offset_mtx = compose_matrix(translate=(math.sin(t / horizontal_period) * horizontal_offset, math.cos(t / horizontal_period) * horizontal_offset, 0.0))
+    o_to_h_mtx = numpy.matmul(o_to_h_mtx, offset_mtx)
+
     scale, shear, angles, translate, perspective = decompose_matrix(o_to_h_mtx)
 
     horizontal_distance = math.sqrt(translate[0]*translate[0] + translate[1]*translate[1])

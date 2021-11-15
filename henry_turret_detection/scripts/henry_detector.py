@@ -118,6 +118,8 @@ def main():
     if half:
         model.half()  # to FP16
 
+    cudnn.benchmark = True
+
     # Run inference
     if device.type != 'cpu':
         model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
@@ -141,39 +143,41 @@ def main():
             net_image = net_image.transpose((2, 0, 1))
             net_image = np.ascontiguousarray(net_image)
 
-#            t1 = time_synchronized()
-#            img = torch.from_numpy(net_image).to(device)
-#            img = img.half() if half else img.float()  # uint8 to fp16/32
-#            img /= 255.0  # 0 - 255 to 0.0 - 1.0
-#
-#            if img.ndimension() == 3:
-#                img = img.unsqueeze(0)
-#
-#            pred = model(img, augment=opt.augment)[0]
-#
-#            pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
-#            t2 = time_synchronized()
-#            s = ""
-#
-#            for i, det in enumerate(pred):
-#                if len(det):
-#                    for *xyxy, conf, cls in reversed(det):
-#                        if conf > 0.85:
-#                            p_scaled = [xyxy[0] * 720.0/416.0 + 280, xyxy[1] * 720.0/416.0, xyxy[2] * 720.0/416.0 + 280, xyxy[3] * 720.0/416.0]
-#                            h_origin = [(p_scaled[0] + p_scaled[2]) / 2.0, (p_scaled[1] + p_scaled[3]) / 2.0]
-#                            #Z = depth_measure_frame[int(h_origin[0]), int(h_origin[1])]
-#
-#                            err, world_pose = point_cloud.get_value(int(h_origin[0]), int(h_origin[1]))
-#
-#                            msg.pose.position.x = world_pose[0]
-#                            msg.pose.position.y = world_pose[1]
-#                            msg.pose.position.z = world_pose[2]
-#                            msg.header.stamp = rospy.Time.now()
-#                            pub.publish(msg)
-#
-#                            cv2.rectangle(visual_frame, (int(p_scaled[0]),  int(p_scaled[1])), (int(p_scaled[2]), int(p_scaled[3])), (0,0,255), 3)
-#
-#                s += '%gx%g ' % img.shape[2:]  # print string
+            img = torch.from_numpy(net_image).to(device)
+            img = img.half() if half else img.float()  # uint8 to fp16/32
+            img /= 255.0  # 0 - 255 to 0.0 - 1.0
+
+            if img.ndimension() == 3:
+                img = img.unsqueeze(0)
+
+            t1 = time_synchronized()
+            pred = model(img, augment=opt.augment)[0]
+
+            pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
+            t2 = time_synchronized()
+            s = ""
+
+            rospy.loginfo("Done < " + str(t2 - t1) + "s >")
+
+            for i, det in enumerate(pred):
+                if len(det):
+                    for *xyxy, conf, cls in reversed(det):
+                        if conf > 0.85:
+                            p_scaled = [xyxy[0] * 720.0/416.0 + 280, xyxy[1] * 720.0/416.0, xyxy[2] * 720.0/416.0 + 280, xyxy[3] * 720.0/416.0]
+                            h_origin = [(p_scaled[0] + p_scaled[2]) / 2.0, (p_scaled[1] + p_scaled[3]) / 2.0]
+                            #Z = depth_measure_frame[int(h_origin[0]), int(h_origin[1])]
+
+                            err, world_pose = point_cloud.get_value(int(h_origin[0]), int(h_origin[1]))
+
+                            msg.pose.position.x = world_pose[0]
+                            msg.pose.position.y = world_pose[1]
+                            msg.pose.position.z = world_pose[2]
+                            msg.header.stamp = rospy.Time.now()
+                            pub.publish(msg)
+
+                            cv2.rectangle(visual_frame, (int(p_scaled[0]),  int(p_scaled[1])), (int(p_scaled[2]), int(p_scaled[3])), (0,0,255), 3)
+
+                s += '%gx%g ' % img.shape[2:]  # print string
 
             cv2.imshow("ZED", visual_frame)
 
@@ -184,9 +188,8 @@ def main():
 
             sleep(0.01)
 
-    sleep(5)
     cv2.destroyAllWindows()
-    sleep(1)
+    sleep(2)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
