@@ -1,0 +1,10 @@
+<launch>
+  <arg name="urdf_path" value="$(find niryo_robot_description)/urdf/ned/niryo_ned.urdf.xacro"/>
+  <param name="robot_description" command="$(find xacro)/xacro $(arg urdf_path)" />
+  <param name="robot_description_tf2" command="$(find xacro)/xacro $(arg urdf_path)" />
+
+  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find henry_turret_description)/rviz/ned.rviz"/>
+</launch>

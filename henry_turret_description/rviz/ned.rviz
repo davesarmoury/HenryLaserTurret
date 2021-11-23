@@ -92,6 +92,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        laser_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         shoulder_link:
           Alpha: 1
           Show Axes: false
@@ -110,6 +115,59 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        zed2_baro_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_camera_center:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        zed2_imu_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_left_camera_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_left_camera_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_mag_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_right_camera_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_right_camera_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_temp_left_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed2_temp_right_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed_bracket_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        zed_mount_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Name: RobotModel
       Robot Description: robot_description_tf2
       TF Prefix: ""
@@ -117,32 +175,10 @@ Visualization Manager:
       Value: true
       Visual Enabled: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        TCP:
-          Value: true
-        arm_link:
-          Value: false
-        base_link:
-          Value: false
-        elbow_link:
-          Value: false
-        forearm_link:
-          Value: false
-        hand_link:
-          Value: false
-        joint5_motor:
-          Value: false
-        shoulder_link:
-          Value: false
-        tool_link:
-          Value: false
-        world:
-          Value: false
-        wrist_link:
-          Value: false
       Marker Alpha: 1
       Marker Scale: 0.6000000238418579
       Name: TF
@@ -150,21 +186,9 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          base_link:
-            shoulder_link:
-              arm_link:
-                elbow_link:
-                  forearm_link:
-                    joint5_motor:
-                      {}
-                    wrist_link:
-                      hand_link:
-                        tool_link:
-                          TCP:
-                            {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48

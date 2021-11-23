@@ -25,7 +25,13 @@
     <child link="zed_link" />
   </joint>
 
-  <link name="laser_link" />
+  <link name="laser_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://henry_turret_description/meshes/lp.dae"/>
+      </geometry>
+    </visual>
+  </link>
 
   <joint name="laser_joint" type="fixed">
     <origin xyz="0 0 0.025" rpy="-1.57070 -1.5707 0" />
