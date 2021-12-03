@@ -1,5 +1,7 @@
 # Henry's Laser Turret
 
+[<img src="https://img.youtube.com/vi/AVp1tndzV34/0.jpg">](https://youtu.be/AVp1tndzV34)
+
 ## Jetson Setup
 
 Make sure ROS Melodic is installed
